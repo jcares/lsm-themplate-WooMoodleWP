@@ -69,7 +69,13 @@ function cursos_online_assets() {
     wp_enqueue_style('cursos-online-style', get_stylesheet_uri(), array(), wp_get_theme()->get('Version'));
     wp_enqueue_style('cursos-online-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap', array(), null);
 
-    wp_enqueue_script('cursos-online-main', get_template_directory_uri() . '/js/main.js', array('jquery'), '1.0', true);
+    $main_js_file = get_template_directory() . '/js/main.js';
+    if (file_exists($main_js_file)) {
+        wp_enqueue_script('cursos-online-main', get_template_directory_uri() . '/js/main.js', array('jquery'), '1.0', true);
+    } else {
+        // Evita error 404 si main.js falta accidentalmente en el tema activo.
+        error_log('cursos_online_assets: js/main.js no encontrado en el tema activo.');
+    }
 }
 add_action('wp_enqueue_scripts', 'cursos_online_assets');
 
