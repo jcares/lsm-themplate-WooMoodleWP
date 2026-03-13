@@ -7,21 +7,4 @@
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
-    <header class="site-header">
-        <div class="container">
-            <div class="header-inner">
-                <div class="logo">
-                    <a href="<?php echo home_url(); ?>"><?php bloginfo('name'); ?></a>
-                </div>
-                <nav class="main-nav">
-                    <?php
-                        wp_nav_menu(array(
-                            'theme_location' => 'menu-principal',
-                            'container' => false,
-                            'items_wrap' => '<ul>%3$s</ul>'
-                        ));
-                    ?>
-                </nav>
-            </div>
-        </div>
-    </header>
+    <?php include get_template_directory() . '/parts/header.php'; ?>

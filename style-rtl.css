@@ -1,0 +1,28 @@
+/* RTL styles for LSM Theme */
+/* Basic RTL mirroring for direction-sensitive elements */
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+header.site-header, .site-footer, .main-nav, .hero-slider, .side-widget, .contact-info {
+    direction: rtl;
+}
+
+.main-navigation .nav-menu, .main-navigation .nav-menu ul {
+    text-align: right;
+}
+
+.main-navigation .nav-menu li {
+    float: right;
+}
+
+.hero-slider .hero-item-content, .course-meta, .about-grid, .cards-grid {
+    text-align: right;
+}
+
+.site-footer .footer-links, .site-footer .footer-links li {
+    text-align: right;
+}
+
+/* Keep the rest from style.css for consistent 2050 look */
