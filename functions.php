@@ -13,6 +13,11 @@ if (file_exists(get_template_directory() . '/inc/setup.php')) {
     require_once get_template_directory() . '/inc/setup.php';
 }
 
+// Integración nativa con Moodle (reemplaza plugins MooWoodle & Edwiser Bridge)
+if (file_exists(get_template_directory() . '/inc/moodle-integration.php')) {
+    require_once get_template_directory() . '/inc/moodle-integration.php';
+}
+
 function cursos_online_setup() {
     // Soporte básico
     add_theme_support('title-tag');
