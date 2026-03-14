@@ -548,10 +548,30 @@ add_action('admin_notices', 'cursos_online_requerimientos_admin_notice');
  * Crear páginas base (Inicio, Sobre Nosotros, Cursos, Contacto) al activar el tema.
  */
 function cursos_online_crear_paginas_base() {
+    // Avoid hard dependency on /screenshot.png (theme thumbnail) for front-end content.
+    $banner_candidates = array(
+        get_template_directory() . '/images/slide1.jpg' => get_template_directory_uri() . '/images/slide1.jpg',
+        get_template_directory() . '/images/slide1.jpeg' => get_template_directory_uri() . '/images/slide1.jpeg',
+        get_template_directory() . '/images/slide1.png' => get_template_directory_uri() . '/images/slide1.png',
+        get_template_directory() . '/screenshot.png' => get_template_directory_uri() . '/screenshot.png',
+    );
+
+    $banner_url = '';
+    foreach ($banner_candidates as $path => $url) {
+        if (file_exists($path)) {
+            $banner_url = $url;
+            break;
+        }
+    }
+
+    $banner_html = '';
+    if (!empty($banner_url)) {
+        $banner_html = '<img src="' . esc_url($banner_url) . '" alt="Banner Curso" style="max-width:100%;height:auto;margin:1rem 0;" />';
+    }
     $pages = array(
         'inicio' => array(
             'title' => 'Inicio',
-            'content' => '<h2>Bienvenido a tu plataforma de formación online</h2><p>Con PCCurico.cl obtén cursos certificados, soporte docente y acceso a aula virtual integrado con Moodle. Diseña cada sección con Elementor para obtener una web profesional.</p><img src="' . esc_url(get_template_directory_uri() . '/screenshot.png') . '" alt="Banner Curso" style="max-width:100%;height:auto;margin:1rem 0;" />',
+            'content' => '<h2>Bienvenido a tu plataforma de formación online</h2><p>Con PCCurico.cl obtén cursos certificados, soporte docente y acceso a aula virtual integrado con Moodle. Diseña cada sección con Elementor para obtener una web profesional.</p>' . $banner_html,
             'template' => 'page-home.php',
         ),
         'sobre-nosotros' => array(
@@ -595,6 +615,48 @@ function cursos_online_crear_paginas_base() {
     }
 }
 add_action('after_switch_theme', 'cursos_online_crear_paginas_base');
+
+function cursos_online_fix_home_banner_screenshot_once() {
+    if (!is_admin() || !current_user_can('manage_options')) {
+        return;
+    }
+
+    $flag = 'cursos_online_fix_home_banner_screenshot_20260314';
+    if (get_option($flag)) {
+        return;
+    }
+
+    $home_page = get_page_by_path('inicio');
+    if (!$home_page || empty($home_page->ID)) {
+        update_option($flag, 1);
+        return;
+    }
+
+    // Only touch the theme-created home page template.
+    $tpl = get_post_meta($home_page->ID, '_wp_page_template', true);
+    if ($tpl !== 'page-home.php') {
+        update_option($flag, 1);
+        return;
+    }
+
+    $content = (string) $home_page->post_content;
+    if (stripos($content, 'screenshot.png') === false) {
+        update_option($flag, 1);
+        return;
+    }
+
+    // Replace any <img> referencing screenshot.png with nothing (prevents 404 noise).
+    $updated = preg_replace('~<img[^>]+screenshot\\.png[^>]*\\/?>(?:\\s*)~i', '', $content);
+    if ($updated !== null && $updated !== $content) {
+        wp_update_post(array(
+            'ID' => $home_page->ID,
+            'post_content' => $updated,
+        ));
+    }
+
+    update_option($flag, 1);
+}
+add_action('admin_init', 'cursos_online_fix_home_banner_screenshot_once');
 
 /**
  * URL de aula virtual configurable
