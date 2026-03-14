@@ -135,6 +135,40 @@ function cursos_online_customize_register($wp_customize) {
             'type' => 'text',
         ));
     }
+
+    // WhatsApp flotante configurado por el usuario
+    $wp_customize->add_setting('cursos_online_whatsapp_message', array(
+        'default' => __('¡Hola! Estoy interesado en sus cursos.', 'cursos-online-wp'),
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+
+    $wp_customize->add_control('cursos_online_whatsapp_message', array(
+        'label' => __('Texto bienvenida WhatsApp', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'textarea',
+    ));
+
+    $wp_customize->add_setting('cursos_online_whatsapp_button_text', array(
+        'default' => __('Chatear por WhatsApp', 'cursos-online-wp'),
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+
+    $wp_customize->add_control('cursos_online_whatsapp_button_text', array(
+        'label' => __('Texto botón WhatsApp', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'text',
+    ));
+
+    $wp_customize->add_setting('cursos_online_whatsapp_button_image', array(
+        'default' => '',
+        'sanitize_callback' => 'esc_url_raw',
+    ));
+
+    $wp_customize->add_control(new WP_Customize_Image_Control($wp_customize, 'cursos_online_whatsapp_button_image', array(
+        'label' => __('Imagen botón WhatsApp (flotante)', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'settings' => 'cursos_online_whatsapp_button_image',
+    )));
 }
 add_action('customize_register', 'cursos_online_customize_register');
 
@@ -174,6 +208,61 @@ function cursos_online_output_social_links() {
     }
     echo '</div>';
 }
+
+function cursos_online_get_whatsapp_message() {
+    return sanitize_text_field(get_theme_mod('cursos_online_whatsapp_message', __('¡Hola! Estoy interesado en sus cursos.', 'cursos-online-wp')));
+}
+
+function cursos_online_get_whatsapp_button_text() {
+    return sanitize_text_field(get_theme_mod('cursos_online_whatsapp_button_text', __('Chatear por WhatsApp', 'cursos-online-wp')));
+}
+
+function cursos_online_get_whatsapp_button_image() {
+    return esc_url(get_theme_mod('cursos_online_whatsapp_button_image', ''));
+}
+
+function cursos_online_output_whatsapp_floating_button() {
+    $phone = sanitize_text_field(get_theme_mod('cursos_online_whatsapp_phone', '')); // ya existe en customizer
+    if (empty($phone)) {
+        return;
+    }
+
+    $message = urlencode(cursos_online_get_whatsapp_message());
+    $button_text = esc_html(cursos_online_get_whatsapp_button_text());
+    $image = cursos_online_get_whatsapp_button_image();
+    $url = "https://wa.me/" . preg_replace('/[^0-9]/', '', $phone) . "?text=" . $message;
+
+    echo '<div class="whatsapp-float-container">';
+    echo '<a class="whatsapp-float" href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">';
+    if ($image) {
+        echo '<img src="' . esc_url($image) . '" alt="WhatsApp" class="whatsapp-float-img" />';
+    } else {
+        echo '<span class="whatsapp-float-icon">💬</span>';
+    }
+    echo '<span class="whatsapp-float-text">' . $button_text . '</span>';
+    echo '</a>';
+    echo '<div class="whatsapp-float-welcome">' . esc_html(cursos_online_get_whatsapp_message()) . '</div>';
+    echo '</div>';
+}
+add_action('wp_footer', 'cursos_online_output_whatsapp_floating_button');
+
+function cursos_online_theme_admin_menu_entry() {
+    add_theme_page(
+        __('Moodle Sync', 'cursos-online-wp'),
+        __('Moodle Sync', 'cursos-online-wp'),
+        'manage_options',
+        'cursos-online-moodle-sync',
+        'cursos_online_theme_sync_admin_page'
+    );
+}
+
+function cursos_online_theme_sync_admin_page() {
+    echo '<div class="wrap"><h1>' . esc_html__('Moodle Sync (Atajo del Tema)', 'cursos-online-wp') . '</h1>';
+    echo '<p>' . esc_html__('Configura el sincronizador desde el plugin Moodle -> WooCommerce.', 'cursos-online-wp') . '</p>';
+    echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=moodlewc-sync')) . '">' . esc_html__('Abrir configuración del plugin Moodle Sync', 'cursos-online-wp') . '</a>';
+    echo '</div>';
+}
+add_action('admin_menu', 'cursos_online_theme_admin_menu_entry');
 
 function cursos_online_handle_contact_form() {
     if (empty($_POST['cursos_online_contact_submit'])) {
