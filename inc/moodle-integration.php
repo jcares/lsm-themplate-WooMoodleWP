@@ -45,7 +45,7 @@ class Cursos_Online_Moodle_Integration {
      */
     public function add_moodle_menu() {
         add_submenu_page(
-            'cursos-online-options',
+            'themes.php',
             'Integración Moodle',
             'Integración Moodle',
             'manage_options',

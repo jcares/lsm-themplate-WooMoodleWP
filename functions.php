@@ -353,14 +353,71 @@ function cursos_online_theme_admin_menu_entry() {
     );
 }
 
+function cursos_online_admin_page_slug_exists($slug) {
+    // Best-effort detection after menus are built (admin_menu has run).
+    global $menu, $submenu;
+
+    if (is_array($menu)) {
+        foreach ($menu as $item) {
+            if (isset($item[2]) && $item[2] === $slug) {
+                return true;
+            }
+        }
+    }
+
+    if (is_array($submenu)) {
+        foreach ($submenu as $items) {
+            if (!is_array($items)) {
+                continue;
+            }
+            foreach ($items as $item) {
+                if (isset($item[2]) && $item[2] === $slug) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+function cursos_online_register_moodlewc_sync_alias_page() {
+    // If the plugin page isn't registered, create a compatibility alias to avoid 403s.
+    if (!is_admin() || !current_user_can('manage_options')) {
+        return;
+    }
+
+    if (cursos_online_admin_page_slug_exists('moodlewc-sync')) {
+        return;
+    }
+
+    add_theme_page(
+        __('Moodle Sync', 'cursos-online-wp'),
+        __('Moodle Sync', 'cursos-online-wp'),
+        'manage_options',
+        'moodlewc-sync',
+        'cursos_online_moodlewc_sync_alias_page'
+    );
+}
+add_action('admin_menu', 'cursos_online_register_moodlewc_sync_alias_page', PHP_INT_MAX);
+
+function cursos_online_moodlewc_sync_alias_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('No tienes permisos para ver esta página.', 'cursos-online-wp'));
+    }
+
+    wp_safe_redirect(admin_url('admin.php?page=moodle-integration'));
+    exit;
+}
+
 function cursos_online_theme_sync_admin_page() {
     if (!current_user_can('manage_options')) {
         wp_die(__('No tienes permisos para ver esta página.', 'cursos-online-wp'));
     }
 
     echo '<div class="wrap"><h1>' . esc_html__('Moodle Sync (Atajo del Tema)', 'cursos-online-wp') . '</h1>';
-    echo '<p>' . esc_html__('Configura el sincronizador desde el plugin Moodle -> WooCommerce.', 'cursos-online-wp') . '</p>';
-    echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=moodlewc-sync')) . '">' . esc_html__('Abrir configuración del plugin Moodle Sync', 'cursos-online-wp') . '</a>';
+    echo '<p>' . esc_html__('Gestiona la integración y sincronización desde la página nativa del tema.', 'cursos-online-wp') . '</p>';
+    echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=moodle-integration')) . '">' . esc_html__('Abrir Integración Moodle', 'cursos-online-wp') . '</a>';
     echo '</div>';
 }
 
