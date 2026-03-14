@@ -538,11 +538,11 @@ class Cursos_Online_Moodle_Integration {
 }
 
 // Inicializar
-add_action('plugins_loaded', function() {
-    if (is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) {
-        Cursos_Online_Moodle_Integration::get_instance();
-    }
-});
+// Note: as a theme module, this file is loaded after `plugins_loaded` has already fired,
+// so hooking init there would not run. Use `init` so admin menus get registered reliably.
+add_action('init', function() {
+    Cursos_Online_Moodle_Integration::get_instance();
+}, 1);
 
 // Helper functions
 function cursos_online_get_user_courses($user_id = null) {
