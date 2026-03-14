@@ -7,7 +7,7 @@
     <div class="hero-layer">
         <h1 class="hero-title"><?php echo esc_html(get_theme_mod('cursos_online_hero_text', 'Aprende en línea con los mejores cursos')); ?></h1>
         <p class="hero-subtitle"><?php esc_html_e('Plataforma de formación cargada a futuro, optimizada para OTEC, academias y ecosistemas e-learning.', 'cursos-online-wp'); ?></p>
-        <a href="<?php echo esc_url(get_permalink(wc_get_page_id('shop'))); ?>" class="btn-principal"><?php esc_html_e('Catálogo de Cursos', 'cursos-online-wp'); ?></a>
+        <a href="<?php echo esc_url(cursos_online_get_shop_url()); ?>" class="btn-principal"><?php echo esc_html(cursos_online_get_course_button_text()); ?></a>
     </div>
 </section>
 

@@ -169,6 +169,71 @@ function cursos_online_customize_register($wp_customize) {
         'section' => 'cursos_online_section',
         'settings' => 'cursos_online_whatsapp_button_image',
     )));
+
+    // Opciones de tema base
+    $wp_customize->add_setting('cursos_online_header_bg', array(
+        'default' => '#10213F',
+        'sanitize_callback' => 'sanitize_hex_color',
+    ));
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'cursos_online_header_bg', array(
+        'label' => __('Color fondo header', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'settings' => 'cursos_online_header_bg',
+    )));
+
+    $wp_customize->add_setting('cursos_online_nav_color', array(
+        'default' => '#dfe9ff',
+        'sanitize_callback' => 'sanitize_hex_color',
+    ));
+    $wp_customize->add_control(new WP_Customize_Color_Control($wp_customize, 'cursos_online_nav_color', array(
+        'label' => __('Color texto navegación', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'settings' => 'cursos_online_nav_color',
+    )));
+
+    $wp_customize->add_setting('cursos_online_courses_columns', array(
+        'default' => 3,
+        'sanitize_callback' => 'absint',
+    ));
+    $wp_customize->add_control('cursos_online_courses_columns', array(
+        'label' => __('Cursos por columna', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'number',
+        'input_attrs' => array(
+            'min' => 1,
+            'max' => 6,
+        ),
+    ));
+
+    $wp_customize->add_setting('cursos_online_course_button_text', array(
+        'default' => __('Comprar Curso', 'cursos-online-wp'),
+        'sanitize_callback' => 'sanitize_text_field',
+    ));
+    $wp_customize->add_control('cursos_online_course_button_text', array(
+        'label' => __('Texto botón del curso', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'text',
+    ));
+
+    $wp_customize->add_setting('cursos_online_course_show_description', array(
+        'default' => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+    ));
+    $wp_customize->add_control('cursos_online_course_show_description', array(
+        'label' => __('Mostrar descripción del curso', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'checkbox',
+    ));
+
+    $wp_customize->add_setting('cursos_online_course_show_price', array(
+        'default' => true,
+        'sanitize_callback' => 'wp_validate_boolean',
+    ));
+    $wp_customize->add_control('cursos_online_course_show_price', array(
+        'label' => __('Mostrar precio del curso', 'cursos-online-wp'),
+        'section' => 'cursos_online_section',
+        'type' => 'checkbox',
+    ));
 }
 add_action('customize_register', 'cursos_online_customize_register');
 
@@ -221,6 +286,25 @@ function cursos_online_get_whatsapp_button_image() {
     return esc_url(get_theme_mod('cursos_online_whatsapp_button_image', ''));
 }
 
+function cursos_online_get_courses_columns() {
+    $columns = absint(get_theme_mod('cursos_online_courses_columns', 3));
+    return max(1, min(6, $columns));
+}
+
+function cursos_online_get_course_button_text() {
+    return sanitize_text_field(get_theme_mod('cursos_online_course_button_text', __('Comprar Curso', 'cursos-online-wp')));
+}
+
+function cursos_online_get_shop_url() {
+    if (function_exists('wc_get_page_id')) {
+        $shop_id = wc_get_page_id('shop');
+        if ($shop_id && $shop_id > 0) {
+            return get_permalink($shop_id);
+        }
+    }
+    return home_url('/');
+}
+
 function cursos_online_output_whatsapp_floating_button() {
     $phone = sanitize_text_field(get_theme_mod('cursos_online_whatsapp_phone', '')); // ya existe en customizer
     if (empty($phone)) {
@@ -248,6 +332,14 @@ add_action('wp_footer', 'cursos_online_output_whatsapp_floating_button');
 
 function cursos_online_theme_admin_menu_entry() {
     add_theme_page(
+        __('Opciones del Tema', 'cursos-online-wp'),
+        __('Opciones del Tema', 'cursos-online-wp'),
+        'manage_options',
+        'cursos-online-theme-options',
+        'cursos_online_theme_options_page'
+    );
+
+    add_theme_page(
         __('Moodle Sync', 'cursos-online-wp'),
         __('Moodle Sync', 'cursos-online-wp'),
         'manage_options',
@@ -257,11 +349,58 @@ function cursos_online_theme_admin_menu_entry() {
 }
 
 function cursos_online_theme_sync_admin_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('No tienes permisos para ver esta página.', 'cursos-online-wp'));
+    }
+
     echo '<div class="wrap"><h1>' . esc_html__('Moodle Sync (Atajo del Tema)', 'cursos-online-wp') . '</h1>';
     echo '<p>' . esc_html__('Configura el sincronizador desde el plugin Moodle -> WooCommerce.', 'cursos-online-wp') . '</p>';
     echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=moodlewc-sync')) . '">' . esc_html__('Abrir configuración del plugin Moodle Sync', 'cursos-online-wp') . '</a>';
     echo '</div>';
 }
+
+function cursos_online_theme_options_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('No tienes permisos para ver esta página.', 'cursos-online-wp'));
+    }
+
+    if (isset($_POST['cursos_online_theme_options_nonce']) && wp_verify_nonce($_POST['cursos_online_theme_options_nonce'], 'cursos_online_theme_options_save')) {
+        set_theme_mod('cursos_online_header_bg', sanitize_hex_color($_POST['cursos_online_header_bg']));
+        set_theme_mod('cursos_online_nav_color', sanitize_hex_color($_POST['cursos_online_nav_color']));
+        set_theme_mod('cursos_online_courses_columns', absint($_POST['cursos_online_courses_columns']));
+        set_theme_mod('cursos_online_course_button_text', sanitize_text_field($_POST['cursos_online_course_button_text']));
+        set_theme_mod('cursos_online_course_show_description', isset($_POST['cursos_online_course_show_description']) ? true : false);
+        set_theme_mod('cursos_online_course_show_price', isset($_POST['cursos_online_course_show_price']) ? true : false);
+
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Configuración del tema guardada.', 'cursos-online-wp') . '</p></div>';
+    }
+
+    $header_bg = get_theme_mod('cursos_online_header_bg', '#10213F');
+    $nav_color = get_theme_mod('cursos_online_nav_color', '#dfe9ff');
+    $columns = get_theme_mod('cursos_online_courses_columns', 3);
+    $button_text = get_theme_mod('cursos_online_course_button_text', __('Comprar Curso', 'cursos-online-wp'));
+    $show_description = get_theme_mod('cursos_online_course_show_description', true);
+    $show_price = get_theme_mod('cursos_online_course_show_price', true);
+
+    echo '<div class="wrap"><h1>' . esc_html__('Opciones básicas del Tema', 'cursos-online-wp') . '</h1>';
+    echo '<form method="post" action="">';
+    wp_nonce_field('cursos_online_theme_options_save', 'cursos_online_theme_options_nonce');
+
+    echo '<table class="form-table"><tbody>';
+    echo '<tr><th scope="row"><label for="cursos_online_header_bg">' . esc_html__('Color de fondo del header', 'cursos-online-wp') . '</label></th><td><input type="text" id="cursos_online_header_bg" name="cursos_online_header_bg" value="' . esc_attr($header_bg) . '" class="regular-text" /></td></tr>';
+    echo '<tr><th scope="row"><label for="cursos_online_nav_color">' . esc_html__('Color del texto de navegación', 'cursos-online-wp') . '</label></th><td><input type="text" id="cursos_online_nav_color" name="cursos_online_nav_color" value="' . esc_attr($nav_color) . '" class="regular-text" /></td></tr>';
+    echo '<tr><th scope="row"><label for="cursos_online_courses_columns">' . esc_html__('Cursos por columna', 'cursos-online-wp') . '</label></th><td><input type="number" id="cursos_online_courses_columns" name="cursos_online_courses_columns" value="' . esc_attr($columns) . '" min="1" max="6" /></td></tr>';
+    echo '<tr><th scope="row"><label for="cursos_online_course_button_text">' . esc_html__('Texto del botón en curso', 'cursos-online-wp') . '</label></th><td><input type="text" id="cursos_online_course_button_text" name="cursos_online_course_button_text" value="' . esc_attr($button_text) . '" class="regular-text" /></td></tr>';
+    echo '<tr><th scope="row">' . esc_html__('Mostrar campos del curso', 'cursos-online-wp') . '</th><td>';
+    echo '<label><input type="checkbox" name="cursos_online_course_show_description" ' . checked($show_description, true, false) . ' /> ' . esc_html__('Descripción', 'cursos-online-wp') . '</label><br />';
+    echo '<label><input type="checkbox" name="cursos_online_course_show_price" ' . checked($show_price, true, false) . ' /> ' . esc_html__('Precio', 'cursos-online-wp') . '</label>';
+    echo '</td></tr>';
+    echo '</tbody></table>';
+
+    submit_button(__('Guardar opciones del tema', 'cursos-online-wp'));
+    echo '</form></div>';
+}
+
 add_action('admin_menu', 'cursos_online_theme_admin_menu_entry');
 
 function cursos_online_handle_contact_form() {

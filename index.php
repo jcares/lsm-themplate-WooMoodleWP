@@ -6,7 +6,7 @@
             <div class="hero-slide-content">
                 <h1><?php echo esc_html(get_theme_mod('cursos_online_hero_text', 'Formación online con certificación')); ?></h1>
                 <p><?php esc_html_e('Accede a cursos profesionales con camino de carrera y soporte docente.', 'cursos-online-wp'); ?></p>
-                <a href="<?php echo esc_url(get_permalink(wc_get_page_id('shop'))); ?>" class="btn-principal"><?php esc_html_e('Ver Todos los Cursos', 'cursos-online-wp'); ?></a>
+                <a href="<?php echo esc_url(cursos_online_get_shop_url()); ?>" class="btn-principal"><?php echo esc_html(cursos_online_get_course_button_text()); ?></a>
             </div>
         </div>
         <div class="hero-cta-container">
