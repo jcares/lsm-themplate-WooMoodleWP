@@ -406,7 +406,7 @@ function cursos_online_moodlewc_sync_alias_page() {
         wp_die(__('No tienes permisos para ver esta página.', 'cursos-online-wp'));
     }
 
-    wp_safe_redirect(admin_url('admin.php?page=moodle-integration'));
+    wp_safe_redirect(admin_url('themes.php?page=moodle-integration'));
     exit;
 }
 
@@ -417,7 +417,7 @@ function cursos_online_theme_sync_admin_page() {
 
     echo '<div class="wrap"><h1>' . esc_html__('Moodle Sync (Atajo del Tema)', 'cursos-online-wp') . '</h1>';
     echo '<p>' . esc_html__('Gestiona la integración y sincronización desde la página nativa del tema.', 'cursos-online-wp') . '</p>';
-    echo '<a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=moodle-integration')) . '">' . esc_html__('Abrir Integración Moodle', 'cursos-online-wp') . '</a>';
+    echo '<a class="button button-primary" href="' . esc_url(admin_url('themes.php?page=moodle-integration')) . '">' . esc_html__('Abrir Integración Moodle', 'cursos-online-wp') . '</a>';
     echo '</div>';
 }
 
@@ -615,6 +615,23 @@ function cursos_online_crear_paginas_base() {
     }
 }
 add_action('after_switch_theme', 'cursos_online_crear_paginas_base');
+
+function cursos_online_redirect_legacy_admin_php_pages() {
+    // These pages live under Appearance (themes.php). If accessed via admin.php they can 403.
+    global $pagenow;
+    if ($pagenow !== 'admin.php') {
+        return;
+    }
+
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+    if ($page !== 'moodle-integration' && $page !== 'moodlewc-sync') {
+        return;
+    }
+
+    wp_safe_redirect(admin_url('themes.php?page=' . $page));
+    exit;
+}
+add_action('admin_init', 'cursos_online_redirect_legacy_admin_php_pages', 1);
 
 function cursos_online_fix_home_banner_screenshot_once() {
     if (!is_admin() || !current_user_can('manage_options')) {
